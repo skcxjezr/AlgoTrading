@@ -1,0 +1,25 @@
+{
+  "run_id": "20250821T054303",
+  "symbol": "BTC/USD",
+  "strategy": "zscore",
+  "tf_min": 5,
+  "start": "2024-08-20T00:00:00+00:00",
+  "end": "2025-08-20T23:59:59+00:00",
+  "params": {
+    "initial_cash": 100000.0,
+    "fee_bps": 0.1,
+    "slippage_bps": 0.02,
+    "min_notional_usd": 5.0,
+    "price_dec": 2,
+    "qty_dec": 6,
+    "z_n": 288,
+    "z_entry": 2.4,
+    "z_exit": 0.0,
+    "z_stop": 3.5,
+    "adx_skip": 30.0,
+    "z_adx_len": 14,
+    "rsi_len": 14,
+    "rsi_lower": 30.0,
+    "rsi_upper": 70.0
+  }
+}

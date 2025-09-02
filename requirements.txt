@@ -1,0 +1,26 @@
+# Broker SDK
+alpaca-py>=0.21.0,<1.0
+
+# Data & math
+pandas>=2.2,<3
+numpy>=1.26,<3
+scipy>=1.11,<2
+
+# HTTP
+requests>=2.31,<3
+
+# Database
+SQLAlchemy>=2.0,<3
+psycopg2-binary>=2.9,<3
+
+# Dashboard
+streamlit>=1.28,<2
+streamlit-autorefresh>=1.0.1
+streamlit-lightweight-charts>=0.7,<1
+altair>=5,<6
+
+# Market data fallback for SPY (Scorecard)
+yfinance>=0.2.38,<1
+
+# Timezone database (for America/New_York, etc.)
+tzdata>=2024.1

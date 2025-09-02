@@ -1,0 +1,176 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-trading}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Place your init SQL files here (e.g., ./docker/sql/000_init.sql)
+      - ./docker/sql:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-trading} || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backtest:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: backtest
+    env_file:
+      - .env
+    environment:
+      PYTHONPATH: /app
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-trading}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      SYMBOL: ${SYMBOL:-BTC/USD}
+    working_dir: /app
+    volumes:
+      - ./:/app
+      - ./out:/app/out
+    command: ["python", "app/part1_backtest.py"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  live_trader:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: live_trader
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      PYTHONPATH: /app
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-trading}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      # Set one symbol format and keep it consistent across services.
+      # If your API needs unslashed, set SYMBOL=BTCUSD in .env
+      SYMBOL: ${SYMBOL:-BTC/USD}
+    working_dir: /app
+    volumes:
+      - ./:/app
+      - ./out:/app/out
+    command: ["python", "app/part2_pseudo_live.py"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  order_listener:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: order_listener
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      PYTHONPATH: /app
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-trading}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      SYMBOL: ${SYMBOL:-BTC/USD}
+    working_dir: /app
+    volumes:
+      - ./:/app
+      - ./out:/app/out
+    command: ["python", "app/part3_order_listener.py"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  risk_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: risk_worker
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      PYTHONPATH: /app
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-trading}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      SYMBOL: ${SYMBOL:-BTC/USD}
+    working_dir: /app
+    volumes:
+      - ./:/app
+      - ./out:/app/out
+    command: ["python", "app/part3_risk_worker.py"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  data_guard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: data_guard
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      PYTHONPATH: /app
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-trading}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      SYMBOL: ${SYMBOL:-BTC/USD}
+    working_dir: /app
+    volumes:
+      - ./:/app
+      - ./out:/app/out
+    command: ["python", "app/part3_data_guard.py"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dashboard
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      PYTHONPATH: /app
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-trading}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      SYMBOL: ${SYMBOL:-BTC/USD}
+    working_dir: /app
+    volumes:
+      - ./:/app
+      - ./out:/app/out
+    command: ["streamlit", "run", "app/dashboard/Home.py", "--server.port=8501", "--server.address=0.0.0.0"]
+    ports:
+      - "8501:8501"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
